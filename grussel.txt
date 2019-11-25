@@ -1,0 +1,375 @@
+List all employees by surname and forenames who have been on a course in 1988.
+
+Solution 
+
+select distinct employee.surname, employee.forenames from employee 
+inner join empcourse on empcourse.empno = employee.empno
+inner join  course on empcourse.courseno = course.courseno 
+where course.cdate like '%-88%'
+
+------
+
+List in alphabetical order of department name then surname and then forename, the current position of all employees. 
+
+Solution 
+
+select department.dname, employee.surname, employee.forenames, jobhistory.position
+from employee
+inner join jobhistory on employee.empno = jobhistory.empno 
+right join department on department.depno = employee.depno  
+where jobhistory.enddate is null 
+order by department.dname, employee.surname, employee.forenames, jobhistory.position  
+
+------
+
+Count the number of employees who have been on each course.
+
+Solution
+
+select empcourse.courseno, count (*) 
+from empcourse
+group by courseno
+
+------
+
+Count the number of employees in each of the departments numbered 3 to 5 inclusively.
+
+Solution 
+
+select employee.depno, count(*)
+from employee
+where (employee.depno>=3)
+group by employee.depno
+
+------
+
+List the average salary of current employees, grouped by department number.
+
+Solution 
+
+select avg(jobhistory.salary) 
+from employee
+inner join jobhistory on jobhistory.empno = employee.empno
+where jobhistory.enddate is null 
+group by employee.depno
+
+------
+
+List the number of jobs each employee has had within the company. Identify each employee by surname. 
+
+Solution 
+
+select employee.surname, count(employee.empno)
+from employee
+left join jobhistory on jobhistory.empno = employee.empno 
+group by employee.surname
+
+------
+
+List the maximum and minimum salary of current employees and their department name, grouped by department.
+
+Solution 
+
+select max(jobhistory.salary), min(jobhistory.salary), department.dname  
+from employee 
+left join jobhistory on jobhistory.empno = employee.empno
+right join department on department.depno = employee.depno
+group by department.dname
+
+------
+
+List all the employees by surname and forenames who are in the same department as Matthew Brownlie.
+
+Solution 
+
+select A.surname, A.forenames 
+from employee A
+left join employee B on A.depno=B.depno
+where ( B.surname='Brownlie' and A.surname!='Brownlie')
+order by A.surname, A.forenames 
+
+------
+
+List the employee numbers and salary of all current employees who earn more than the employee number 16. In each row show both the employee's salary and the salary of employee 16.
+
+Solution 
+
+select A.empno, A.salary, B.salary
+from jobhistory A
+left join jobhistory B on B.salary<A.salary
+where (A.enddate is null and B.empno=16 and B.enddate is null)
+
+------
+
+List the full names and positions of current employees who have been on any of the courses that Robert Roberts has been on.
+
+Solution 
+
+select distinct D.surname, D.forenames, E.position
+from employee A
+inner join empcourse B on B.empno=A.empno
+left join empcourse C on B.courseno=C.courseno 
+left join employee D on C.empno = D.empno 
+left join jobhistory E on E.empno = D.empno
+where A.surname='Roberts' and E.enddate is null and D.surname != 'Roberts' 
+
+------
+
+List the full names of any employee who started a new job on the same day as Allan Robinson.
+
+Solution 
+
+select distinct D.surname, D.forenames 
+from employee A
+inner join jobhistory B on B.empno=A.empno
+left join jobhistory C on B.startdate=C.startdate 
+left join employee D on C.empno = D.empno 
+left join jobhistory E on E.empno = D.empno
+where A.surname='Robinson' and D.surname != 'Robinson' 
+
+------
+
+List all employees by their full names with their positions who are in the same department as Brian Murphy and are older than him.
+
+Solution 
+
+select distinct D.surname, D.forenames, E.position
+from employee A
+inner join jobhistory B on B.empno=A.empno
+left join employee C on A.depno=C.depno 
+left join employee D on C.empno = D.empno 
+left join jobhistory E on E.empno = D.empno
+where A.surname='Murphy' and D.surname != 'Murphy' and  A.dob > D.dob and  E.enddate is null
+order by D.surname, D.forenames
+
+------
+
+List all employees by their full names who currently have the same salary as Claire MacCallan, and order them alphabetically by surname.
+
+Solution 
+
+select D.surname, D.forenames
+from employee A
+inner join jobhistory B on B.empno=A.empno
+left join jobhistory C on B.salary=C.salary 
+left join employee D on C.empno = D.empno 
+left join jobhistory E on E.empno = D.empno
+where A.surname='MacCallan' and D.surname != 'MacCallan'  and C.enddate is null and E.enddate is null
+order by D.surname 
+
+------
+
+Convert the answer to question 15 to COUNT the occurences.
+
+Solution 
+
+select count(D.surname)
+from employee A
+inner join jobhistory B on B.empno=A.empno
+left join jobhistory C on B.salary=C.salary 
+left join employee D on C.empno = D.empno 
+left join jobhistory E on E.empno = D.empno
+where A.surname='MacCallan' and D.surname != 'MacCallan'  and C.enddate is null and E.enddate is null
+order by D.surname 
+
+------
+
+Use subqueries to list the surname of employees who have been on a course with employee 19.
+
+Solution 
+
+select A.surname
+from employee A
+where empno != 19 and A.empno in
+( 
+select B.empno 
+from empcourse B
+where B.courseno in 
+(
+select C.courseno 
+from empcourse C
+where C.empno=19
+)
+)
+
+------
+
+List the surname of those who earn less than the average salary of all staff.
+
+select A.surname 
+from employee A
+where A.empno in 
+(
+select B.empno
+from jobhistory B 
+where B.enddate is null and B.salary in   
+(
+select C.salary
+from jobhistory C
+where C.salary <
+(
+select avg(D.salary)
+from jobhistory D
+)
+)
+)
+
+------
+
+List the surname of employees who earn more than the average salary of employees who have jobs connected with Accounts.
+
+Solution 
+
+select A.surname
+from employee A
+where A.empno in (
+select B.empno 
+from jobhistory B 
+where B.enddate is null and B.salary in (
+select C.salary 
+from jobhistory C 
+where C.salary > (
+select avg(D.salary)
+from jobhistory D
+where D.position like '%Acc%' and enddate is null
+)
+)
+)
+
+------
+
+List the surname and forenames of employees who earn more than any employee connected to Admin.
+
+Solution 
+
+select A.surname, A.forenames
+from employee A
+where A.empno in (
+select B.empno 
+from jobhistory B 
+where B.enddate is null and B.salary in (
+select C.salary 
+from jobhistory C 
+where C.salary > (
+select avg(D.salary)
+from jobhistory D
+where D.position like '%dmin%' and D.enddate is null
+)
+)
+)
+
+------
+
+List the surname and position of employees earning less than everyone in department 3.
+
+Solution 
+
+select A.surname,  B.position
+from employee A
+left join jobhistory B on B.empno = A.empno  
+where B.enddate is null
+and 
+B.salary < (
+select min(A.salary) 
+from jobhistory A 
+where A.empno in (
+select B.empno 
+from employee B 
+where B.depno = 3
+)
+)
+
+------
+
+List the surname of employees who has been on a course which employee number 14 has not been on.
+
+Solution 
+
+select distinct A.surname
+from employee A 
+left join empcourse B on B.empno = A.empno 
+where B.courseno in (
+select C.courseno 
+from empcourse C
+where C.courseno not in (
+select D.courseno
+from empcourse D 
+where D.empno=14
+)
+)
+
+------
+
+List the surname of employees who are currently doing a unique job.
+
+Solution 
+
+select A.surname
+from employee A
+left join jobhistory B on A.empno = B.empno 
+where B.enddate is null and B.position in ( 
+select C.position
+from jobhistory C 
+where C.enddate is null 
+group by C.position 
+having count(*) =1
+)
+
+------
+
+List the surname of employees who have done or are doing any job which employee 23 has done or is doing. Include the surname of employee 23.
+
+Solution 
+
+select distinct A.surname 
+from employee A 
+left join jobhistory B on A.empno = B.empno 
+where B.position in (
+select position from jobhistory 
+where empno=23
+)
+
+------
+
+List the course names of courses which employees from department number 2 have been on.
+
+Solution 
+
+select C.cname 
+from course C
+where C.courseno in(
+select B.courseno 
+from employee A 
+left join empcourse B on B.empno = A.empno
+where A.depno = 2 and B.courseno is not null
+)
+
+------
+
+List the employee surname, forenames, and course for each time an employee attended a course at which no other colleague was present.
+
+Solution 
+
+select C.surname, C.forenames, E.cname
+from employee C
+left join empcourse D on D.empno = C.empno   
+left join course E on E.courseno in ( 
+select F.courseno 
+from empcourse F 
+where F.courseno in ( 
+select G.courseno
+from empcourse G 
+group by G.courseno
+having count(*)=1
+)
+)
+where D.courseno in (
+select B.courseno 
+from empcourse B 
+where B.courseno in ( 
+select A.courseno
+from empcourse A 
+group by A.courseno
+having count(*)=1
+)
+)
